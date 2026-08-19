@@ -65,6 +65,71 @@ PomodoroLogic.computeRingOffset(0, 60, 565.48);  // → 565.48
 PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 ```
 
+#### `calculateXP(completedWorkSessions: number, xpPerSession: number): number`
+
+完了した作業セッション数から累計 XP を計算します。
+負の値や不正な値は `0` に補正されます。`xpPerSession` が `0` 以下の場合はデフォルトの `25` を使用します。
+
+```js
+PomodoroLogic.calculateXP(4, 25);  // → 100
+PomodoroLogic.calculateXP(-1, 25); // → 0
+```
+
+#### `calculateLevel(totalXP: number, xpPerLevel: number): number`
+
+累計 XP からレベルを計算します（レベル 1 から始まる）。
+
+```js
+PomodoroLogic.calculateLevel(0, 100);   // → 1
+PomodoroLogic.calculateLevel(100, 100); // → 2
+PomodoroLogic.calculateLevel(250, 100); // → 3
+```
+
+#### `calculateStreak(sessionHistoryByDate: object, referenceDate?: string): number`
+
+`"YYYY-MM-DD"` をキーとするセッション履歴から、今日を終点とした連続日数（ストリーク）を返します。
+`referenceDate` を省略すると現在日時を基準にします。
+
+```js
+const history = { "2026-08-17": 2, "2026-08-18": 1, "2026-08-19": 3 };
+PomodoroLogic.calculateStreak(history, "2026-08-19T12:00:00Z"); // → 3
+```
+
+#### `buildPeriodStats(sessionHistoryByDate: object, focusMinutesByDate: object, days: number, referenceDate?: string): object`
+
+指定期間の統計サマリーを返します。戻り値の構造は以下の通りです。
+
+```js
+{
+  days: 7,
+  totalSessions: 4,
+  activeDays: 3,
+  completionRate: 42.9,        // activeDays / days × 100 (小数点1桁)
+  averageFocusMinutes: 26.3,   // totalFocusMinutes / totalSessions (小数点1桁)
+  daily: [
+    { date: "2026-08-13", sessions: 0, focusMinutes: 0 },
+    // ... 直近 days 日分のエントリ
+  ]
+}
+```
+
+#### `collectBadges(streakDays: number, weeklySessions: number, totalSessions: number): Array`
+
+条件を満たすバッジの配列を返します。
+
+| バッジ ID | 条件 | ラベル | トーン |
+|---|---|---|---|
+| `"streak-3"` | `streakDays >= 3` | `"3日連続"` | `"bronze"` |
+| `"weekly-10"` | `weeklySessions >= 10` | `"週10回達成"` | `"silver"` |
+| `"total-100"` | `totalSessions >= 100` | `"100回達成"` | `"gold"` |
+
+```js
+PomodoroLogic.collectBadges(3, 10, 100);
+// → [{ id: "streak-3", label: "3日連続", tone: "bronze" },
+//     { id: "weekly-10", label: "週10回達成", tone: "silver" },
+//     { id: "total-100", label: "100回達成", tone: "gold" }]
+```
+
 ---
 
 ## `timer.js` — DOM コントローラ
@@ -74,8 +139,13 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | 定数 | 値 | 説明 |
 |---|---|---|
 | `STORAGE_KEY` | `"pomodoro-state"` | localStorage のキー |
-| `DEFAULT_SETTINGS` | `{ work:25, shortBreak:5, longBreak:15, sessionsBeforeLongBreak:4 }` | デフォルト設定 |
+| `DEFAULT_SETTINGS` | `{ work:25, shortBreak:5, longBreak:15, sessionsBeforeLongBreak:4, theme:"dark", sounds:{start:true, end:true, tick:false} }` | デフォルト設定 |
 | `RING_CIRCUMFERENCE` | `2π × 90 ≈ 565.49` | SVG 進捗リングの円周（px） |
+| `XP_PER_SESSION` | `25` | 1 作業セッション当たりの獲得 XP |
+| `XP_PER_LEVEL` | `100` | レベルアップに必要な XP |
+| `WORK_OPTIONS` | `[15, 25, 35, 45]` | 作業時間の許容値（分） |
+| `BREAK_OPTIONS` | `[5, 10, 15]` | 休憩時間の許容値（分） |
+| `THEME_OPTIONS` | `["dark", "light", "focus"]` | テーマの許容値 |
 
 ### 主要な状態変数
 
@@ -86,6 +156,9 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `secondsLeft` | 残り秒数 |
 | `intervalId` | `setInterval` のハンドル（`null` = 停止中） |
 | `sessionCount` | 完了した作業セッション数 |
+| `audioCtx` | Web Audio API の `AudioContext` インスタンス（遅延初期化） |
+| `sessionHistoryByDate` | 日付ごとの完了セッション数（`{ "YYYY-MM-DD": number }`） |
+| `focusMinutesByDate` | 日付ごとの累計フォーカス分数（`{ "YYYY-MM-DD": number }`） |
 
 ### 主要な関数
 
@@ -96,15 +169,23 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `toggleTimer()` | Start/Pause を切り替える |
 | `resetTimer()` | 現在のモードの開始時間にリセットする |
 | `setMode(mode)` | モードを切り替え、タイマーをリセットする |
-| `tick()` | 1 秒減算し、0 になったらアラートと自動モード遷移を実行する |
+| `tick()` | 1 秒減算し、0 になったらアラートと自動モード遷移を実行する。作業セッション完了時は `sessionHistoryByDate`・`focusMinutesByDate` を更新する |
 | `updateDisplay()` | 残り時間表示・リングアニメーション・タブタイトルを更新する |
-| `playAlertSound()` | Web Audio API で 880Hz のビープ音を再生する（0.6 秒） |
+| `playTone(frequency, durationSeconds, volume)` | Web Audio API でサイン波トーンを再生する |
+| `playStartSound()` | タイマー開始時に 660Hz・0.15 秒のトーンを再生する（`sounds.start` が有効な場合のみ） |
+| `playEndSound()` | セッション終了時に 880Hz・0.6 秒のトーンを再生する（`sounds.end` が有効な場合のみ） |
+| `playTickSound()` | 毎秒 520Hz・0.03 秒のトーンを再生する（`sounds.tick` が有効な場合のみ） |
 | `notifyCompletion()` | ブラウザ通知 API でセッション終了を通知する |
+| `applyTheme(theme)` | `body` のテーマクラスを切り替える（`theme-dark` / `theme-light` / `theme-focus`） |
 | `loadSettings()` | localStorage から設定を読み込む |
 | `loadSessionCount()` | localStorage からセッション数を読み込む |
-| `persistState()` | 設定とセッション数を localStorage に保存する |
+| `loadSessionHistory()` | localStorage から日付別セッション履歴を読み込む |
+| `loadFocusMinutesHistory()` | localStorage から日付別フォーカス分数履歴を読み込む |
+| `persistState()` | 設定・セッション数・履歴を localStorage に保存する |
 | `openSettingsPanel()` | 設定パネルの表示/非表示を切り替える |
 | `saveSettings()` | 設定パネルの入力値を検証・保存してモードをリセットする |
+| `updateGamificationViews()` | XP・レベル・ストリーク・バッジ・統計グラフを再描画する |
+| `renderGraph(container, stats)` | 棒グラフ UI を動的に生成してコンテナに挿入する |
 
 ### イベントバインディング
 
@@ -123,7 +204,7 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 
 ### CSS カスタムプロパティ（変数）
 
-| 変数 | 値 | 用途 |
+| 変数 | 値（dark テーマ） | 用途 |
 |---|---|---|
 | `--color-work` | `#d64541` | 作業モードのテーマカラー |
 | `--color-short-break` | `#4e9a51` | 短い休憩のテーマカラー |
@@ -131,6 +212,14 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `--color-bg` | `#1e1e2f` | ページ背景色 |
 | `--color-surface` | `#2a2a3d` | カードの背景色 |
 | `--color-text` | `#f5f5f5` | テキストカラー |
+
+### テーマクラス
+
+| クラス | 説明 |
+|---|---|
+| `body.theme-dark` | デフォルトテーマ（ダーク背景） |
+| `body.theme-light` | ライトテーマ（`--color-bg: #f3f5f8`、`--color-surface: #ffffff`） |
+| `body.theme-focus` | フォーカステーマ（`--color-bg: #0f1117`、ボーダー付き最小限デザイン） |
 
 ### 主要なクラス
 
@@ -146,6 +235,15 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `.controls` | Start / Reset ボタングループ |
 | `.control-btn--primary` | プライマリボタン（作業モード色の背景） |
 | `.settings-panel` | 設定パネル（`hidden` 属性で制御） |
+| `.gamification` | XP・レベル・ストリーク・バッジ・統計を含む gamification セクション |
+| `.badge` | バッジのピル形状要素 |
+| `.badge--bronze` | ブロンズバッジ（`#795548`） |
+| `.badge--silver` | シルバーバッジ（`#90a4ae`） |
+| `.badge--gold` | ゴールドバッジ（`#d4af37`） |
+| `.badge--empty` | バッジ未取得時のプレースホルダー |
+| `.stats__graph` | 7 日分の棒グラフコンテナ（7 列グリッド） |
+| `#monthly-graph` | 30 日分の棒グラフコンテナ（30 列グリッド、横スクロール） |
+| `.stats__bar` | 個々の棒グラフ要素（グラデーション背景） |
 
 ---
 
@@ -160,3 +258,14 @@ Flask の `url_for` ヘルパーを使って静的ファイルを参照してい
 ```
 
 `timerLogic.js` は `timer.js` より先に読み込む必要があります（グローバル `PomodoroLogic` の依存のため）。
+
+### HTML 構成
+
+| セクション | 説明 |
+|---|---|
+| `.modes` | Work / Short Break / Long Break の切り替えボタン |
+| `.timer` | SVG 進捗リングと残り時間表示 |
+| `.controls` | Start / Reset ボタン |
+| `.session-count` | 完了セッション数の表示 |
+| `section.gamification` | XP・レベル・ストリーク・バッジ・週次／月次統計グラフ |
+| `section#settings-panel` | 設定パネル（hidden 属性で初期非表示） |
