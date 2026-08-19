@@ -25,7 +25,13 @@
       "tick": false
     }
   },
-  "sessionCount": 0
+  "sessionCount": 0,
+  "sessionHistoryByDate": {
+    "2026-08-19": 3
+  },
+  "focusMinutesByDate": {
+    "2026-08-19": 75
+  }
 }
 ```
 
@@ -52,6 +58,22 @@
 |---|---|---|---|
 | `sessionCount` | `number` (整数, ≥0) | `0` | 完了した作業セッションの累計数 |
 
+#### `sessionHistoryByDate`
+
+日付ごとの完了セッション数を記録します。
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `sessionHistoryByDate` | `object` | キーが `"YYYY-MM-DD"` 形式の日付文字列、値がその日の完了セッション数（整数） |
+
+#### `focusMinutesByDate`
+
+日付ごとの累計フォーカス時間（分）を記録します。
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `focusMinutesByDate` | `object` | キーが `"YYYY-MM-DD"` 形式の日付文字列、値がその日の累計フォーカス分数 |
+
 ---
 
 ## モード定義
@@ -71,3 +93,6 @@
 - `localStorage` のデータが存在しない・壊れている場合は、デフォルト値が使用されます。
 - `settings` フィールドが存在しない場合は `DEFAULT_SETTINGS` で補完されます（スプレッド演算子によるマージ）。
 - `sessionCount` が整数でない場合は `0` にリセットされます。
+- `sessionHistoryByDate` / `focusMinutesByDate` が存在しない場合は空オブジェクト `{}` が使用されます。
+- 許容値リスト外の `work`・`shortBreak`・`longBreak` 値はデフォルト値にフォールバックします。
+- `theme` が許容値リスト外の場合は `"dark"` にフォールバックします。
