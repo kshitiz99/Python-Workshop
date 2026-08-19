@@ -35,6 +35,7 @@ let settings = loadSettings();
 let currentMode = "work";
 let secondsLeft = getDurationSeconds(currentMode, settings);
 let animationFrameId = null;
+let completionTimeoutId = null;
 let targetEndTimeMs = null;
 let sessionCount = loadSessionCount();
 let audioCtx = null;
@@ -90,6 +91,26 @@ function startTimer() {
   if (animationFrameId !== null) return;
   targetEndTimeMs = Date.now() + secondsLeft * 1000;
   startBtn.textContent = "Pause";
+  const completeTimer = () => {
+    const remainingMs = targetEndTimeMs === null ? 0 : targetEndTimeMs - Date.now();
+    if (remainingMs > 0) {
+      completionTimeoutId = setTimeout(completeTimer, remainingMs);
+      return;
+    }
+
+    stopTimer(false);
+    secondsLeft = 0;
+    updateDisplay(0, 0);
+    playAlertSound();
+    notifyCompletion();
+    if (currentMode === "work") {
+      sessionCount += 1;
+      sessionCountEl.textContent = sessionCount;
+      persistState();
+    }
+    setMode(computeNextMode(currentMode, sessionCount, settings));
+  };
+  completionTimeoutId = setTimeout(completeTimer, secondsLeft * 1000);
   const animate = () => {
     const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
     const preciseSecondsLeft = remainingMs / 1000;
@@ -99,17 +120,7 @@ function startTimer() {
     updateDisplay(displaySeconds, preciseSecondsLeft);
 
     if (remainingMs <= 0) {
-      stopTimer(false);
-      secondsLeft = 0;
-      updateDisplay(0, 0);
-      playAlertSound();
-      notifyCompletion();
-      if (currentMode === "work") {
-        sessionCount += 1;
-        sessionCountEl.textContent = sessionCount;
-        persistState();
-      }
-      setMode(computeNextMode(currentMode, sessionCount, settings));
+      completeTimer();
       return;
     }
 
@@ -126,6 +137,8 @@ function stopTimer(refreshDisplay = true) {
   }
   cancelAnimationFrame(animationFrameId);
   animationFrameId = null;
+  clearTimeout(completionTimeoutId);
+  completionTimeoutId = null;
   targetEndTimeMs = null;
   startBtn.textContent = "Start";
   if (refreshDisplay) updateDisplay();
