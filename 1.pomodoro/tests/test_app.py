@@ -31,6 +31,19 @@ def test_index_contains_timer_elements(client):
     assert 'id="time-left"' in body
     assert 'id="start-btn"' in body
     assert 'id="reset-btn"' in body
+    assert 'id="setting-theme"' in body
+    assert 'id="setting-sound-start"' in body
+    assert 'id="setting-sound-end"' in body
+    assert 'id="setting-sound-tick"' in body
+
+
+def test_index_contains_preset_duration_options(client):
+    response = client.get("/")
+    body = response.get_data(as_text=True)
+    for value in ("15", "25", "35", "45"):
+        assert f'<option value="{value}"' in body
+    for value in ("5", "10", "15"):
+        assert f'<option value="{value}"' in body
 
 
 def test_static_timer_js_is_served(client):
