@@ -44,7 +44,7 @@
 | `sounds.end` | `boolean` | `true` | — | タイマー終了時のサウンドを有効にするか |
 | `sounds.tick` | `boolean` | `false` | — | 毎秒のティックサウンドを有効にするか |
 
-有効値以外の値が保存されていた場合、`loadSettings()` は自動的にデフォルト値に置き換えます。
+`work` / `shortBreak` / `longBreak` / `theme` に有効値以外の値が保存されていた場合、`loadSettings()` は自動的にデフォルト値に置き換えます。`sessionsBeforeLongBreak` と `sounds` の各値は保存値をそのまま読み込みます。
 
 #### `sessionCount`
 
