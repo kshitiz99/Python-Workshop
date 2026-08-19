@@ -39,18 +39,18 @@
 
 #### `settings` オブジェクト
 
-| フィールド | 型 | デフォルト値 | 許容値 | 説明 |
+| フィールド | 型 | デフォルト値 | 有効値 | 説明 |
 |---|---|---|---|---|
 | `work` | `number` | `25` | `15`, `25`, `35`, `45` | 作業セッションの長さ（分） |
 | `shortBreak` | `number` | `5` | `5`, `10`, `15` | 短い休憩の長さ（分） |
 | `longBreak` | `number` | `15` | `5`, `10`, `15` | 長い休憩の長さ（分） |
-| `sessionsBeforeLongBreak` | `number` (≥1) | `4` | 任意の正整数 | 長い休憩に入るまでの作業セッション数 |
-| `theme` | `string` | `"dark"` | `"dark"`, `"light"`, `"focus"` | UI テーマ |
-| `sounds.start` | `boolean` | `true` | — | タイマー開始時のサウンドを鳴らすか |
-| `sounds.end` | `boolean` | `true` | — | セッション終了時のサウンドを鳴らすか |
-| `sounds.tick` | `boolean` | `false` | — | 毎秒チック音を鳴らすか |
+| `sessionsBeforeLongBreak` | `number` (≥1) | `4` | 1以上の数値（整数以外や12超も許容、UI入力は1〜12） | 長い休憩に入るまでの作業セッション数 |
+| `theme` | `string` | `"dark"` | `"dark"`, `"light"`, `"focus"` | アプリのテーマ |
+| `sounds.start` | `boolean` | `true` | — | タイマー開始時のサウンドを有効にするか |
+| `sounds.end` | `boolean` | `true` | — | タイマー終了時のサウンドを有効にするか |
+| `sounds.tick` | `boolean` | `false` | — | 毎秒のティックサウンドを有効にするか |
 
-> **注意**: `work`・`shortBreak`・`longBreak` は許容値リストに含まれない値を保存しようとした場合、デフォルト値にフォールバックします。
+`work` / `shortBreak` / `longBreak` / `theme` に有効値以外の値が保存されていた場合、`loadSettings()` は自動的にデフォルト値に置き換えます。`sessionsBeforeLongBreak` と `sounds` の各値は保存値をそのまま読み込みます。
 
 #### `sessionCount`
 

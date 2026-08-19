@@ -28,6 +28,7 @@ const {
   getDurationSeconds,
   computeNextMode,
   computeRingOffset,
+  computeProgressColor,
   calculateXP,
   calculateLevel,
   calculateStreak,
@@ -70,7 +71,10 @@ const THEME_OPTIONS = ["dark", "light", "focus"];
 let settings = loadSettings();
 let currentMode = "work";
 let secondsLeft = getDurationSeconds(currentMode, settings);
-let intervalId = null;
+let animationFrameId = null;
+let completionTimeoutId = null;
+let targetEndTimeMs = null;
+let lastTickDisplaySeconds = null;
 let sessionCount = loadSessionCount();
 let audioCtx = null;
 let sessionHistoryByDate = loadSessionHistory();
@@ -148,34 +152,44 @@ function applyTheme(theme) {
   document.body.classList.add(`theme-${resolvedTheme}`);
 }
 
-function updateDisplay() {
-  const formatted = formatTime(secondsLeft);
+function updateDisplay(displaySeconds = Math.ceil(secondsLeft), preciseSecondsLeft = secondsLeft) {
+  const formatted = formatTime(displaySeconds);
   timeLeftEl.textContent = formatted;
   const total = getDurationSeconds(currentMode, settings);
-  const offset = computeRingOffset(secondsLeft, total, RING_CIRCUMFERENCE);
+  const offset = computeRingOffset(preciseSecondsLeft, total, RING_CIRCUMFERENCE);
   ringProgressEl.style.strokeDashoffset = offset;
-  document.title = intervalId !== null ? `${formatted} - ${MODE_META[currentMode].label}` : DEFAULT_TITLE;
+  ringProgressEl.style.stroke =
+    currentMode === "work" ? computeProgressColor(preciseSecondsLeft, total) : MODE_META[currentMode].color;
+  document.title = animationFrameId !== null ? `${formatted} - ${MODE_META[currentMode].label}` : DEFAULT_TITLE;
 }
 
 function setMode(mode) {
+  stopTimer();
   currentMode = mode;
   secondsLeft = getDurationSeconds(mode, settings);
-  ringProgressEl.style.stroke = MODE_META[mode].color;
+  document.body.classList.toggle("is-focus-mode", mode === "work");
   modeButtons.forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.mode === mode);
   });
-  stopTimer();
   updateDisplay();
 }
 
-function tick() {
-  secondsLeft -= 1;
-  if (secondsLeft > 0 && settings.sounds.tick) {
-    playTickSound();
-  }
-  updateDisplay();
-  if (secondsLeft <= 0) {
-    stopTimer();
+function startTimer() {
+  if (animationFrameId !== null) return;
+  targetEndTimeMs = Date.now() + secondsLeft * 1000;
+  lastTickDisplaySeconds = Math.ceil(secondsLeft);
+  playStartSound();
+  startBtn.textContent = "Pause";
+  const completeTimer = () => {
+    const remainingMs = targetEndTimeMs === null ? 0 : targetEndTimeMs - Date.now();
+    if (remainingMs > 0) {
+      completionTimeoutId = setTimeout(completeTimer, remainingMs);
+      return;
+    }
+
+    stopTimer(false);
+    secondsLeft = 0;
+    updateDisplay(0, 0);
     playEndSound();
     notifyCompletion();
     if (currentMode === "work") {
@@ -188,26 +202,48 @@ function tick() {
       updateGamificationViews();
     }
     setMode(computeNextMode(currentMode, sessionCount, settings));
+  };
+  completionTimeoutId = setTimeout(completeTimer, secondsLeft * 1000);
+  const animate = () => {
+    const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
+    const preciseSecondsLeft = remainingMs / 1000;
+    const displaySeconds = Math.ceil(preciseSecondsLeft);
+
+    secondsLeft = preciseSecondsLeft;
+    if (displaySeconds < lastTickDisplaySeconds && displaySeconds > 0 && settings.sounds.tick) {
+      playTickSound();
+    }
+    lastTickDisplaySeconds = displaySeconds;
+    updateDisplay(displaySeconds, preciseSecondsLeft);
+
+    if (remainingMs <= 0) {
+      completeTimer();
+      return;
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+  };
+
+  animationFrameId = requestAnimationFrame(animate);
+}
+
+function stopTimer(refreshDisplay = true) {
+  if (animationFrameId !== null && targetEndTimeMs !== null) {
+    const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
+    secondsLeft = remainingMs / 1000;
   }
-}
-
-function startTimer() {
-  if (intervalId !== null) return;
-  playStartSound();
-  intervalId = setInterval(tick, 1000);
-  startBtn.textContent = "Pause";
-  updateDisplay();
-}
-
-function stopTimer() {
-  clearInterval(intervalId);
-  intervalId = null;
+  cancelAnimationFrame(animationFrameId);
+  animationFrameId = null;
+  clearTimeout(completionTimeoutId);
+  completionTimeoutId = null;
+  targetEndTimeMs = null;
+  lastTickDisplaySeconds = null;
   startBtn.textContent = "Start";
-  updateDisplay();
+  if (refreshDisplay) updateDisplay();
 }
 
 function toggleTimer() {
-  if (intervalId === null) {
+  if (animationFrameId === null) {
     startTimer();
   } else {
     stopTimer();
@@ -368,5 +404,5 @@ if ("Notification" in window && Notification.permission === "default") {
 
 sessionCountEl.textContent = sessionCount;
 applyTheme(settings.theme);
-updateDisplay();
+setMode(currentMode);
 updateGamificationViews();

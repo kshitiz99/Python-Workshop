@@ -143,9 +143,9 @@ PomodoroLogic.collectBadges(3, 10, 100);
 | `RING_CIRCUMFERENCE` | `2π × 90 ≈ 565.49` | SVG 進捗リングの円周（px） |
 | `XP_PER_SESSION` | `25` | 1 作業セッション当たりの獲得 XP |
 | `XP_PER_LEVEL` | `100` | レベルアップに必要な XP |
-| `WORK_OPTIONS` | `[15, 25, 35, 45]` | 作業時間の許容値（分） |
-| `BREAK_OPTIONS` | `[5, 10, 15]` | 休憩時間の許容値（分） |
-| `THEME_OPTIONS` | `["dark", "light", "focus"]` | テーマの許容値 |
+| `WORK_OPTIONS` | `[15, 25, 35, 45]` | 作業時間の選択肢（分） |
+| `BREAK_OPTIONS` | `[5, 10, 15]` | 休憩時間の選択肢（分） |
+| `THEME_OPTIONS` | `["dark", "light", "focus"]` | テーマの選択肢 |
 
 ### 主要な状態変数
 
@@ -156,7 +156,7 @@ PomodoroLogic.collectBadges(3, 10, 100);
 | `secondsLeft` | 残り秒数 |
 | `intervalId` | `setInterval` のハンドル（`null` = 停止中） |
 | `sessionCount` | 完了した作業セッション数 |
-| `audioCtx` | Web Audio API の `AudioContext` インスタンス（遅延初期化） |
+| `audioCtx` | Web Audio API の `AudioContext` インスタンス（初回音声再生時に生成） |
 | `sessionHistoryByDate` | 日付ごとの完了セッション数（`{ "YYYY-MM-DD": number }`） |
 | `focusMinutesByDate` | 日付ごとの累計フォーカス分数（`{ "YYYY-MM-DD": number }`） |
 
@@ -174,9 +174,11 @@ PomodoroLogic.collectBadges(3, 10, 100);
 | `playTone(frequency, durationSeconds, volume)` | Web Audio API でサイン波トーンを再生する |
 | `playStartSound()` | タイマー開始時に 660Hz・0.15 秒のトーンを再生する（`sounds.start` が有効な場合のみ） |
 | `playEndSound()` | セッション終了時に 880Hz・0.6 秒のトーンを再生する（`sounds.end` が有効な場合のみ） |
-| `playTickSound()` | 毎秒 520Hz・0.03 秒のトーンを再生する（`sounds.tick` が有効な場合のみ） |
+| `playTickSound()` | 520Hz・0.03 秒のトーンを再生する（呼び出し条件の判定は `tick()` 側で `sounds.tick` を確認） |
 | `notifyCompletion()` | ブラウザ通知 API でセッション終了を通知する |
 | `applyTheme(theme)` | `body` のテーマクラスを切り替える（`theme-dark` / `theme-light` / `theme-focus`） |
+| `getAllowedNumber(value, allowedValues, fallback)` | 値が許容リストに含まれるか検証し、含まれない場合はフォールバック値を返す |
+| `getAllowedTheme(value)` | テーマ値が `THEME_OPTIONS` に含まれるか検証し、含まれない場合はデフォルトを返す |
 | `loadSettings()` | localStorage から設定を読み込む |
 | `loadSessionCount()` | localStorage からセッション数を読み込む |
 | `loadSessionHistory()` | localStorage から日付別セッション履歴を読み込む |
