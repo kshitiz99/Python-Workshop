@@ -65,11 +65,12 @@ JavaScript は **ロジック層** と **UI 層** の 2 モジュールに分離
       ▼
   timer.js (イベントハンドラ)
       │
-      ├─ timerLogic.js の関数呼び出し（計算）
+      ├─ timerLogic.js の関数呼び出し（計算・ゲーミフィケーション算出）
       │
-      ├─ DOM 更新 (timeLeftEl, ringProgressEl, etc.)
+      ├─ DOM 更新 (timeLeftEl, ringProgressEl, xpValueEl, badgeListEl, etc.)
       │
       └─ localStorage への永続化 (persistState)
+             ↳ settings / sessionCount / sessionHistoryByDate / focusMinutesByDate
 ```
 
 ---
