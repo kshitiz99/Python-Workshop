@@ -263,8 +263,13 @@ body {
   margin-top: 8px;
   display: grid;
   gap: 4px;
-  grid-template-columns: repeat(auto-fit, minmax(12px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   align-items: end;
+}
+
+#monthly-graph {
+  grid-template-columns: repeat(30, minmax(24px, 1fr));
+  overflow-x: auto;
 }
 
 .stats__bar-item {
