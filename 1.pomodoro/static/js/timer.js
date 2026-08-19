@@ -76,13 +76,13 @@ function updateDisplay(displaySeconds = secondsLeft, preciseSecondsLeft = second
 }
 
 function setMode(mode) {
+  stopTimer();
   currentMode = mode;
   secondsLeft = getDurationSeconds(mode, settings);
   document.body.classList.toggle("is-focus-mode", mode === "work");
   modeButtons.forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.mode === mode);
   });
-  stopTimer();
   updateDisplay();
 }
 
