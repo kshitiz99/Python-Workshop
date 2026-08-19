@@ -5,6 +5,12 @@ const DEFAULT_SETTINGS = {
   shortBreak: 5,
   longBreak: 15,
   sessionsBeforeLongBreak: 4,
+  theme: "dark",
+  sounds: {
+    start: true,
+    end: true,
+    tick: false,
+  },
 };
 
 const MODE_META = {
@@ -30,6 +36,14 @@ const settingWorkEl = document.getElementById("setting-work");
 const settingShortBreakEl = document.getElementById("setting-short-break");
 const settingLongBreakEl = document.getElementById("setting-long-break");
 const settingSessionsEl = document.getElementById("setting-sessions");
+const settingThemeEl = document.getElementById("setting-theme");
+const settingSoundStartEl = document.getElementById("setting-sound-start");
+const settingSoundEndEl = document.getElementById("setting-sound-end");
+const settingSoundTickEl = document.getElementById("setting-sound-tick");
+
+const WORK_OPTIONS = [15, 25, 35, 45];
+const BREAK_OPTIONS = [5, 10, 15];
+const THEME_OPTIONS = ["dark", "light", "focus"];
 
 let settings = loadSettings();
 let currentMode = "work";
@@ -42,7 +56,18 @@ function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && saved.settings) {
-      return { ...DEFAULT_SETTINGS, ...saved.settings };
+      return {
+        ...DEFAULT_SETTINGS,
+        ...saved.settings,
+        work: getAllowedNumber(saved.settings.work, WORK_OPTIONS, DEFAULT_SETTINGS.work),
+        shortBreak: getAllowedNumber(saved.settings.shortBreak, BREAK_OPTIONS, DEFAULT_SETTINGS.shortBreak),
+        longBreak: getAllowedNumber(saved.settings.longBreak, BREAK_OPTIONS, DEFAULT_SETTINGS.longBreak),
+        theme: getAllowedTheme(saved.settings.theme),
+        sounds: {
+          ...DEFAULT_SETTINGS.sounds,
+          ...(saved.settings.sounds || {}),
+        },
+      };
     }
   } catch (err) {
     // ignore corrupt storage
@@ -61,6 +86,21 @@ function loadSessionCount() {
 
 function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, sessionCount }));
+}
+
+function getAllowedNumber(value, allowedValues, fallback) {
+  const parsed = Number(value);
+  return allowedValues.includes(parsed) ? parsed : fallback;
+}
+
+function getAllowedTheme(value) {
+  return THEME_OPTIONS.includes(value) ? value : DEFAULT_SETTINGS.theme;
+}
+
+function applyTheme(theme) {
+  const resolvedTheme = getAllowedTheme(theme);
+  document.body.classList.remove("theme-dark", "theme-light", "theme-focus");
+  document.body.classList.add(`theme-${resolvedTheme}`);
 }
 
 function updateDisplay() {
@@ -85,10 +125,13 @@ function setMode(mode) {
 
 function tick() {
   secondsLeft -= 1;
+  if (secondsLeft > 0 && settings.sounds.tick) {
+    playTickSound();
+  }
   updateDisplay();
   if (secondsLeft <= 0) {
     stopTimer();
-    playAlertSound();
+    playEndSound();
     notifyCompletion();
     if (currentMode === "work") {
       sessionCount += 1;
@@ -101,6 +144,7 @@ function tick() {
 
 function startTimer() {
   if (intervalId !== null) return;
+  playStartSound();
   intervalId = setInterval(tick, 1000);
   startBtn.textContent = "Pause";
   updateDisplay();
@@ -133,17 +177,32 @@ function notifyCompletion() {
   }
 }
 
-function playAlertSound() {
+function playTone(frequency, durationSeconds, volume) {
+  if (!window.AudioContext && !window.webkitAudioContext) return;
   audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
   const oscillator = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   oscillator.type = "sine";
-  oscillator.frequency.value = 880;
-  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durationSeconds);
   oscillator.connect(gain).connect(audioCtx.destination);
   oscillator.start();
-  oscillator.stop(audioCtx.currentTime + 0.6);
+  oscillator.stop(audioCtx.currentTime + durationSeconds);
+}
+
+function playStartSound() {
+  if (!settings.sounds.start) return;
+  playTone(660, 0.15, 0.12);
+}
+
+function playEndSound() {
+  if (!settings.sounds.end) return;
+  playTone(880, 0.6, 0.2);
+}
+
+function playTickSound() {
+  playTone(520, 0.03, 0.015);
 }
 
 function openSettingsPanel() {
@@ -151,17 +210,28 @@ function openSettingsPanel() {
   settingShortBreakEl.value = settings.shortBreak;
   settingLongBreakEl.value = settings.longBreak;
   settingSessionsEl.value = settings.sessionsBeforeLongBreak;
+  settingThemeEl.value = settings.theme;
+  settingSoundStartEl.checked = settings.sounds.start;
+  settingSoundEndEl.checked = settings.sounds.end;
+  settingSoundTickEl.checked = settings.sounds.tick;
   settingsPanel.hidden = !settingsPanel.hidden;
 }
 
 function saveSettings() {
   settings = {
-    work: Math.max(1, Number(settingWorkEl.value) || DEFAULT_SETTINGS.work),
-    shortBreak: Math.max(1, Number(settingShortBreakEl.value) || DEFAULT_SETTINGS.shortBreak),
-    longBreak: Math.max(1, Number(settingLongBreakEl.value) || DEFAULT_SETTINGS.longBreak),
+    work: getAllowedNumber(settingWorkEl.value, WORK_OPTIONS, DEFAULT_SETTINGS.work),
+    shortBreak: getAllowedNumber(settingShortBreakEl.value, BREAK_OPTIONS, DEFAULT_SETTINGS.shortBreak),
+    longBreak: getAllowedNumber(settingLongBreakEl.value, BREAK_OPTIONS, DEFAULT_SETTINGS.longBreak),
     sessionsBeforeLongBreak: Math.max(1, Number(settingSessionsEl.value) || DEFAULT_SETTINGS.sessionsBeforeLongBreak),
+    theme: getAllowedTheme(settingThemeEl.value),
+    sounds: {
+      start: settingSoundStartEl.checked,
+      end: settingSoundEndEl.checked,
+      tick: settingSoundTickEl.checked,
+    },
   };
   persistState();
+  applyTheme(settings.theme);
   settingsPanel.hidden = true;
   setMode(currentMode);
 }
@@ -187,4 +257,5 @@ if ("Notification" in window && Notification.permission === "default") {
 }
 
 sessionCountEl.textContent = sessionCount;
+applyTheme(settings.theme);
 updateDisplay();
