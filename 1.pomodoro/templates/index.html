@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="app">
+    <div class="app__header">
+      <h1 class="app__title">Pomodoro Timer</h1>
+      <button id="settings-toggle" class="icon-btn" aria-label="Settings" title="Settings">⚙</button>
+    </div>
+
+    <div class="modes">
+      <button class="mode-btn is-active" data-mode="work">Work</button>
+      <button class="mode-btn" data-mode="shortBreak">Short Break</button>
+      <button class="mode-btn" data-mode="longBreak">Long Break</button>
+    </div>
+
+    <div class="timer">
+      <svg class="timer__ring" viewBox="0 0 200 200">
+        <circle class="timer__ring-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="timer__ring-progress" cx="100" cy="100" r="90"></circle>
+      </svg>
+      <div class="timer__display">
+        <span id="time-left">25:00</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="start-btn" class="control-btn control-btn--primary">Start</button>
+      <button id="reset-btn" class="control-btn">Reset</button>
+    </div>
+
+    <p class="session-count">Completed sessions: <span id="session-count">0</span></p>
+
+    <section id="settings-panel" class="settings-panel" hidden>
+      <h2 class="settings-panel__title">Settings</h2>
+      <label class="settings-field">
+        Work (minutes)
+        <input type="number" id="setting-work" min="1" max="120" value="25">
+      </label>
+      <label class="settings-field">
+        Short Break (minutes)
+        <input type="number" id="setting-short-break" min="1" max="60" value="5">
+      </label>
+      <label class="settings-field">
+        Long Break (minutes)
+        <input type="number" id="setting-long-break" min="1" max="60" value="15">
+      </label>
+      <label class="settings-field">
+        Sessions before Long Break
+        <input type="number" id="setting-sessions" min="1" max="12" value="4">
+      </label>
+      <button id="settings-save" class="control-btn control-btn--primary">Save</button>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/timerLogic.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/timer.js') }}"></script>
+</body>
+</html>
