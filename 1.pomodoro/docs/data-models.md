@@ -38,7 +38,7 @@
 | `work` | `number` | `25` | `15`, `25`, `35`, `45` | 作業セッションの長さ（分） |
 | `shortBreak` | `number` | `5` | `5`, `10`, `15` | 短い休憩の長さ（分） |
 | `longBreak` | `number` | `15` | `5`, `10`, `15` | 長い休憩の長さ（分） |
-| `sessionsBeforeLongBreak` | `number` (≥1) | `4` | 任意の正整数 | 長い休憩に入るまでの作業セッション数 |
+| `sessionsBeforeLongBreak` | `number` (≥1) | `4` | 1以上の数値（整数以外や12超も許容、UI入力は1〜12） | 長い休憩に入るまでの作業セッション数 |
 | `theme` | `string` | `"dark"` | `"dark"`, `"light"`, `"focus"` | アプリのテーマ |
 | `sounds.start` | `boolean` | `true` | — | タイマー開始時のサウンドを有効にするか |
 | `sounds.end` | `boolean` | `true` | — | タイマー終了時のサウンドを有効にするか |
