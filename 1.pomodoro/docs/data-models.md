@@ -29,10 +29,10 @@
 
 | フィールド | 型 | デフォルト値 | 説明 |
 |---|---|---|---|
-| `work` | `number` (整数, ≥1) | `25` | 作業セッションの長さ（分） |
-| `shortBreak` | `number` (整数, ≥1) | `5` | 短い休憩の長さ（分） |
-| `longBreak` | `number` (整数, ≥1) | `15` | 長い休憩の長さ（分） |
-| `sessionsBeforeLongBreak` | `number` (整数, ≥1) | `4` | 長い休憩に入るまでの作業セッション数 |
+| `work` | `number` (≥1) | `25` | 作業セッションの長さ（分） |
+| `shortBreak` | `number` (≥1) | `5` | 短い休憩の長さ（分） |
+| `longBreak` | `number` (≥1) | `15` | 長い休憩の長さ（分） |
+| `sessionsBeforeLongBreak` | `number` (≥1) | `4` | 長い休憩に入るまでの作業セッション数 |
 
 #### `sessionCount`
 
