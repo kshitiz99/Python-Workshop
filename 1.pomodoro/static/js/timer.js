@@ -59,6 +59,10 @@ function loadSettings() {
       return {
         ...DEFAULT_SETTINGS,
         ...saved.settings,
+        work: getAllowedNumber(saved.settings.work, WORK_OPTIONS, DEFAULT_SETTINGS.work),
+        shortBreak: getAllowedNumber(saved.settings.shortBreak, BREAK_OPTIONS, DEFAULT_SETTINGS.shortBreak),
+        longBreak: getAllowedNumber(saved.settings.longBreak, BREAK_OPTIONS, DEFAULT_SETTINGS.longBreak),
+        theme: getAllowedTheme(saved.settings.theme),
         sounds: {
           ...DEFAULT_SETTINGS.sounds,
           ...(saved.settings.sounds || {}),
