@@ -40,10 +40,16 @@ def test_index_contains_timer_elements(client):
 def test_index_contains_preset_duration_options(client):
     response = client.get("/")
     body = response.get_data(as_text=True)
-    for value in ("15", "25", "35", "45"):
-        assert f'<option value="{value}"' in body
-    for value in ("5", "10", "15"):
-        assert f'<option value="{value}"' in body
+    for select_id, values in (
+        ("setting-work", ("15", "25", "35", "45")),
+        ("setting-short-break", ("5", "10", "15")),
+        ("setting-long-break", ("5", "10", "15")),
+    ):
+        select_start = body.index(f'<select id="{select_id}">')
+        select_end = body.index("</select>", select_start)
+        select_markup = body[select_start:select_end]
+        for value in values:
+            assert f'<option value="{value}"' in select_markup
 
 
 def test_static_timer_js_is_served(client):
