@@ -31,6 +31,9 @@ def test_index_contains_timer_elements(client):
     assert 'id="time-left"' in body
     assert 'id="start-btn"' in body
     assert 'id="reset-btn"' in body
+    assert 'id="xp-value"' in body
+    assert 'id="streak-value"' in body
+    assert 'id="weekly-graph"' in body
 
 
 def test_static_timer_js_is_served(client):

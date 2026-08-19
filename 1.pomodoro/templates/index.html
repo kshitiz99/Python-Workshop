@@ -36,6 +36,27 @@
 
     <p class="session-count">Completed sessions: <span id="session-count">0</span></p>
 
+    <section class="gamification">
+      <h2 class="gamification__title">Gamification</h2>
+      <p class="gamification__meta">XP: <span id="xp-value">0</span> / Level: <span id="level-value">1</span></p>
+      <p class="gamification__meta">Streak: <span id="streak-value">0</span> days</p>
+      <div id="badge-list" class="badge-list" aria-label="achievement badges"></div>
+
+      <div class="stats">
+        <h3 class="stats__title">Weekly Stats (7 days)</h3>
+        <p class="stats__meta">Completion Rate: <span id="weekly-completion-rate">0%</span></p>
+        <p class="stats__meta">Avg Focus Time: <span id="weekly-avg-focus">0 min</span></p>
+        <div id="weekly-graph" class="stats__graph" aria-label="weekly sessions graph"></div>
+      </div>
+
+      <div class="stats">
+        <h3 class="stats__title">Monthly Stats (30 days)</h3>
+        <p class="stats__meta">Completion Rate: <span id="monthly-completion-rate">0%</span></p>
+        <p class="stats__meta">Avg Focus Time: <span id="monthly-avg-focus">0 min</span></p>
+        <div id="monthly-graph" class="stats__graph" aria-label="monthly sessions graph"></div>
+      </div>
+    </section>
+
     <section id="settings-panel" class="settings-panel" hidden>
       <h2 class="settings-panel__title">Settings</h2>
       <label class="settings-field">
