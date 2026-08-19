@@ -20,7 +20,8 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: "Segoe UI", Roboto, sans-serif;
-  overflow: hidden;
+overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
