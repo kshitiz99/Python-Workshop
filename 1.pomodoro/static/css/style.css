@@ -5,6 +5,9 @@
   --color-bg: #1e1e2f;
   --color-surface: #2a2a3d;
   --color-text: #f5f5f5;
+  --color-border: rgba(255, 255, 255, 0.2);
+  --color-input-bg: rgba(255, 255, 255, 0.05);
+  --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -28,7 +31,7 @@ body {
   border-radius: 16px;
   background: var(--color-surface);
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--app-shadow);
 }
 
 .app__title {
@@ -86,13 +89,18 @@ body {
   font-size: 0.85rem;
 }
 
-.settings-field input {
+.settings-field input,
+.settings-field select {
   width: 64px;
   padding: 4px 6px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  background: var(--color-input-bg);
   color: var(--color-text);
+}
+
+.settings-field--checkbox input {
+  width: auto;
 }
 
 #settings-save {
@@ -291,4 +299,27 @@ body {
 .stats__bar-label {
   font-size: 0.56rem;
   opacity: 0.75;
+}
+
+body.theme-light {
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-text: #1e1e2f;
+  --color-border: rgba(30, 30, 47, 0.2);
+  --color-input-bg: rgba(30, 30, 47, 0.06);
+  --app-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-focus {
+  --color-bg: #0f1117;
+  --color-surface: #0f1117;
+  --color-text: #e9ebf2;
+  --color-border: rgba(233, 235, 242, 0.2);
+  --color-input-bg: rgba(233, 235, 242, 0.04);
+  --app-shadow: none;
+}
+
+body.theme-focus .app {
+  border: 1px solid rgba(233, 235, 242, 0.08);
+  border-radius: 12px;
 }
