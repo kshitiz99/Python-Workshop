@@ -45,7 +45,7 @@ PomodoroLogic.getDurationSeconds("longBreak", settings);  // → 900
 現在のモードとセッション数から次のモードを決定します。
 
 - ブレーク中 → 常に `"work"` を返す
-- 作業中 → `sessionCount % sessionsBeforeLongBreak === 0` なら `"longBreak"`、それ以外は `"shortBreak"`
+- 作業中 → `sessionCount > 0 && sessionCount % sessionsBeforeLongBreak === 0` なら `"longBreak"`、それ以外は `"shortBreak"`
 
 ```js
 const settings = { sessionsBeforeLongBreak: 4, ... };
