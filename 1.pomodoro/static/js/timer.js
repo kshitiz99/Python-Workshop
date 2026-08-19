@@ -15,7 +15,7 @@ const MODE_META = {
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 90;
 const DEFAULT_TITLE = document.title;
-const { formatTime, getDurationSeconds, computeNextMode, computeRingOffset } = PomodoroLogic;
+const { formatTime, getDurationSeconds, computeNextMode, computeRingOffset, computeProgressColor } = PomodoroLogic;
 
 const timeLeftEl = document.getElementById("time-left");
 const startBtn = document.getElementById("start-btn");
@@ -34,7 +34,8 @@ const settingSessionsEl = document.getElementById("setting-sessions");
 let settings = loadSettings();
 let currentMode = "work";
 let secondsLeft = getDurationSeconds(currentMode, settings);
-let intervalId = null;
+let animationFrameId = null;
+let targetEndTimeMs = null;
 let sessionCount = loadSessionCount();
 let audioCtx = null;
 
@@ -63,19 +64,21 @@ function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, sessionCount }));
 }
 
-function updateDisplay() {
-  const formatted = formatTime(secondsLeft);
+function updateDisplay(displaySeconds = secondsLeft, preciseSecondsLeft = secondsLeft) {
+  const formatted = formatTime(displaySeconds);
   timeLeftEl.textContent = formatted;
   const total = getDurationSeconds(currentMode, settings);
-  const offset = computeRingOffset(secondsLeft, total, RING_CIRCUMFERENCE);
+  const offset = computeRingOffset(preciseSecondsLeft, total, RING_CIRCUMFERENCE);
   ringProgressEl.style.strokeDashoffset = offset;
-  document.title = intervalId !== null ? `${formatted} - ${MODE_META[currentMode].label}` : DEFAULT_TITLE;
+  ringProgressEl.style.stroke =
+    currentMode === "work" ? computeProgressColor(preciseSecondsLeft, total) : MODE_META[currentMode].color;
+  document.title = animationFrameId !== null ? `${formatted} - ${MODE_META[currentMode].label}` : DEFAULT_TITLE;
 }
 
 function setMode(mode) {
   currentMode = mode;
   secondsLeft = getDurationSeconds(mode, settings);
-  ringProgressEl.style.stroke = MODE_META[mode].color;
+  document.body.classList.toggle("is-focus-mode", mode === "work");
   modeButtons.forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.mode === mode);
   });
@@ -83,38 +86,53 @@ function setMode(mode) {
   updateDisplay();
 }
 
-function tick() {
-  secondsLeft -= 1;
-  updateDisplay();
-  if (secondsLeft <= 0) {
-    stopTimer();
-    playAlertSound();
-    notifyCompletion();
-    if (currentMode === "work") {
-      sessionCount += 1;
-      sessionCountEl.textContent = sessionCount;
-      persistState();
-    }
-    setMode(computeNextMode(currentMode, sessionCount, settings));
-  }
-}
-
 function startTimer() {
-  if (intervalId !== null) return;
-  intervalId = setInterval(tick, 1000);
+  if (animationFrameId !== null) return;
+  targetEndTimeMs = Date.now() + secondsLeft * 1000;
   startBtn.textContent = "Pause";
-  updateDisplay();
+  const animate = () => {
+    const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
+    const preciseSecondsLeft = remainingMs / 1000;
+    const displaySeconds = Math.ceil(preciseSecondsLeft);
+
+    secondsLeft = displaySeconds;
+    updateDisplay(displaySeconds, preciseSecondsLeft);
+
+    if (remainingMs <= 0) {
+      stopTimer(false);
+      secondsLeft = 0;
+      updateDisplay(0, 0);
+      playAlertSound();
+      notifyCompletion();
+      if (currentMode === "work") {
+        sessionCount += 1;
+        sessionCountEl.textContent = sessionCount;
+        persistState();
+      }
+      setMode(computeNextMode(currentMode, sessionCount, settings));
+      return;
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+  };
+
+  animationFrameId = requestAnimationFrame(animate);
 }
 
-function stopTimer() {
-  clearInterval(intervalId);
-  intervalId = null;
+function stopTimer(refreshDisplay = true) {
+  if (animationFrameId !== null && targetEndTimeMs !== null) {
+    const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
+    secondsLeft = Math.ceil(remainingMs / 1000);
+  }
+  cancelAnimationFrame(animationFrameId);
+  animationFrameId = null;
+  targetEndTimeMs = null;
   startBtn.textContent = "Start";
-  updateDisplay();
+  if (refreshDisplay) updateDisplay();
 }
 
 function toggleTimer() {
-  if (intervalId === null) {
+  if (animationFrameId === null) {
     startTimer();
   } else {
     stopTimer();
@@ -187,4 +205,4 @@ if ("Notification" in window && Notification.permission === "default") {
 }
 
 sessionCountEl.textContent = sessionCount;
-updateDisplay();
+setMode(currentMode);
