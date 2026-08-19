@@ -32,7 +32,12 @@
   }
 
   function formatDateKey(date) {
-    return normalizeDate(date).toISOString().slice(0, 10);
+    const normalized = normalizeDate(date);
+    return [
+      String(normalized.getFullYear()).padStart(4, "0"),
+      String(normalized.getMonth() + 1).padStart(2, "0"),
+      String(normalized.getDate()).padStart(2, "0"),
+    ].join("-");
   }
 
   function shiftDate(date, dayOffset) {
