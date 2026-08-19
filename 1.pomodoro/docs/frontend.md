@@ -74,8 +74,11 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | 定数 | 値 | 説明 |
 |---|---|---|
 | `STORAGE_KEY` | `"pomodoro-state"` | localStorage のキー |
-| `DEFAULT_SETTINGS` | `{ work:25, shortBreak:5, longBreak:15, sessionsBeforeLongBreak:4 }` | デフォルト設定 |
+| `DEFAULT_SETTINGS` | `{ work:25, shortBreak:5, longBreak:15, sessionsBeforeLongBreak:4, theme:"dark", sounds:{start:true,end:true,tick:false} }` | デフォルト設定 |
 | `RING_CIRCUMFERENCE` | `2π × 90 ≈ 565.49` | SVG 進捗リングの円周（px） |
+| `WORK_OPTIONS` | `[15, 25, 35, 45]` | 作業時間の選択肢（分） |
+| `BREAK_OPTIONS` | `[5, 10, 15]` | 休憩時間の選択肢（分） |
+| `THEME_OPTIONS` | `["dark", "light", "focus"]` | テーマの選択肢 |
 
 ### 主要な状態変数
 
@@ -86,6 +89,7 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `secondsLeft` | 残り秒数 |
 | `intervalId` | `setInterval` のハンドル（`null` = 停止中） |
 | `sessionCount` | 完了した作業セッション数 |
+| `audioCtx` | Web Audio API の `AudioContext` インスタンス（初回音声再生時に生成） |
 
 ### 主要な関数
 
@@ -96,10 +100,16 @@ PomodoroLogic.computeRingOffset(30, 60, 565.48); // → 282.74
 | `toggleTimer()` | Start/Pause を切り替える |
 | `resetTimer()` | 現在のモードの開始時間にリセットする |
 | `setMode(mode)` | モードを切り替え、タイマーをリセットする |
-| `tick()` | 1 秒減算し、0 になったらアラートと自動モード遷移を実行する |
+| `tick()` | 1 秒減算し、0 になったらサウンド再生・通知・自動モード遷移を実行する |
 | `updateDisplay()` | 残り時間表示・リングアニメーション・タブタイトルを更新する |
-| `playAlertSound()` | Web Audio API で 880Hz のビープ音を再生する（0.6 秒） |
+| `playTone(frequency, durationSeconds, volume)` | Web Audio API で指定周波数のトーンを再生する |
+| `playStartSound()` | タイマー開始音を再生する（660Hz、0.15 秒） |
+| `playEndSound()` | タイマー終了音を再生する（880Hz、0.6 秒） |
+| `playTickSound()` | 毎秒のティック音を再生する（520Hz、0.03 秒） |
 | `notifyCompletion()` | ブラウザ通知 API でセッション終了を通知する |
+| `applyTheme(theme)` | `<body>` に `theme-{name}` クラスを付与してテーマを切り替える |
+| `getAllowedNumber(value, allowedValues, fallback)` | 値が許容リストに含まれるか検証し、含まれない場合はフォールバック値を返す |
+| `getAllowedTheme(value)` | テーマ値が `THEME_OPTIONS` に含まれるか検証し、含まれない場合はデフォルトを返す |
 | `loadSettings()` | localStorage から設定を読み込む |
 | `loadSessionCount()` | localStorage からセッション数を読み込む |
 | `persistState()` | 設定とセッション数を localStorage に保存する |
