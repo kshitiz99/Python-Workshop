@@ -3,6 +3,7 @@ const {
   getDurationSeconds,
   computeNextMode,
   computeRingOffset,
+  computeProgressColor,
   calculateXP,
   calculateLevel,
   calculateStreak,
@@ -81,6 +82,24 @@ describe("computeRingOffset", () => {
 
   test("returns half the circumference at the midpoint", () => {
     expect(computeRingOffset(30, 60, 100)).toBe(50);
+  });
+
+  test("clamps negative seconds to full circumference", () => {
+    expect(computeRingOffset(-10, 60, 100)).toBe(100);
+  });
+});
+
+describe("computeProgressColor", () => {
+  test("starts from blue", () => {
+    expect(computeProgressColor(60, 60)).toBe("#2e86c1");
+  });
+
+  test("passes through yellow at midpoint", () => {
+    expect(computeProgressColor(30, 60)).toBe("#f1c40f");
+  });
+
+  test("ends in red", () => {
+    expect(computeProgressColor(0, 60)).toBe("#d64541");
   });
 });
 

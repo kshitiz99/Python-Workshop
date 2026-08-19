@@ -23,6 +23,35 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+body.is-focus-mode::before {
+  opacity: 0.28;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(46, 134, 193, 0.45) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 30%, rgba(241, 196, 15, 0.35) 0 2px, transparent 3px),
+    radial-gradient(circle at 35% 75%, rgba(255, 255, 255, 0.18) 0 2px, transparent 3px);
+  background-size: 180px 180px, 240px 240px, 200px 200px;
+  animation: focus-particles 18s linear infinite;
+}
+
+body.is-focus-mode::after {
+  opacity: 0.25;
+  background: radial-gradient(circle at center, rgba(241, 196, 15, 0.4) 0, transparent 60%);
+  animation: focus-ripple 6s ease-out infinite;
 }
 
 .app {
@@ -160,7 +189,7 @@ body {
   stroke-linecap: round;
   stroke-dasharray: 565.48;
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear;
+  transition: stroke 0.3s linear;
 }
 
 .timer__display {
@@ -322,4 +351,30 @@ body.theme-focus {
 body.theme-focus .app {
   border: 1px solid rgba(233, 235, 242, 0.08);
   border-radius: 12px;
+}
+
+@keyframes focus-particles {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-8px, 10px, 0);
+  }
+  100% {
+    transform: translate3d(12px, -8px, 0);
+  }
+}
+
+@keyframes focus-ripple {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.08;
+  }
+  65% {
+    opacity: 0.28;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
