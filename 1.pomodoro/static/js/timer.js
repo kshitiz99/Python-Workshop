@@ -64,7 +64,7 @@ function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, sessionCount }));
 }
 
-function updateDisplay(displaySeconds = secondsLeft, preciseSecondsLeft = secondsLeft) {
+function updateDisplay(displaySeconds = Math.ceil(secondsLeft), preciseSecondsLeft = secondsLeft) {
   const formatted = formatTime(displaySeconds);
   timeLeftEl.textContent = formatted;
   const total = getDurationSeconds(currentMode, settings);
@@ -95,7 +95,7 @@ function startTimer() {
     const preciseSecondsLeft = remainingMs / 1000;
     const displaySeconds = Math.ceil(preciseSecondsLeft);
 
-    secondsLeft = displaySeconds;
+    secondsLeft = preciseSecondsLeft;
     updateDisplay(displaySeconds, preciseSecondsLeft);
 
     if (remainingMs <= 0) {
@@ -122,7 +122,7 @@ function startTimer() {
 function stopTimer(refreshDisplay = true) {
   if (animationFrameId !== null && targetEndTimeMs !== null) {
     const remainingMs = Math.max(0, targetEndTimeMs - Date.now());
-    secondsLeft = Math.ceil(remainingMs / 1000);
+    secondsLeft = remainingMs / 1000;
   }
   cancelAnimationFrame(animationFrameId);
   animationFrameId = null;
