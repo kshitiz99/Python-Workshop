@@ -4,6 +4,11 @@ const {
   computeNextMode,
   computeRingOffset,
   computeProgressColor,
+  calculateXP,
+  calculateLevel,
+  calculateStreak,
+  buildPeriodStats,
+  collectBadges,
 } = require("../static/js/timerLogic");
 
 describe("formatTime", () => {
@@ -95,5 +100,76 @@ describe("computeProgressColor", () => {
 
   test("ends in red", () => {
     expect(computeProgressColor(0, 60)).toBe("#d64541");
+  });
+});
+
+describe("calculateXP", () => {
+  test("calculates XP from completed sessions", () => {
+    expect(calculateXP(4, 25)).toBe(100);
+  });
+
+  test("guards against invalid values", () => {
+    expect(calculateXP(-1, 25)).toBe(0);
+    expect(calculateXP(3, 0)).toBe(75);
+  });
+});
+
+describe("calculateLevel", () => {
+  test("levels up every 100 XP by default", () => {
+    expect(calculateLevel(0, 100)).toBe(1);
+    expect(calculateLevel(99, 100)).toBe(1);
+    expect(calculateLevel(100, 100)).toBe(2);
+    expect(calculateLevel(250, 100)).toBe(3);
+  });
+});
+
+describe("calculateStreak", () => {
+  test("counts consecutive days ending today", () => {
+    const history = {
+      "2026-08-17": 2,
+      "2026-08-18": 1,
+      "2026-08-19": 3,
+    };
+    expect(calculateStreak(history, "2026-08-19T12:00:00Z")).toBe(3);
+  });
+
+  test("returns zero when today has no completion", () => {
+    const history = {
+      "2026-08-18": 1,
+    };
+    expect(calculateStreak(history, "2026-08-19T12:00:00Z")).toBe(0);
+  });
+});
+
+describe("buildPeriodStats", () => {
+  test("builds completion rate and average focus from daily history", () => {
+    const sessions = {
+      "2026-08-17": 2,
+      "2026-08-18": 1,
+      "2026-08-19": 1,
+    };
+    const focusMinutes = {
+      "2026-08-17": 50,
+      "2026-08-18": 25,
+      "2026-08-19": 30,
+    };
+
+    const stats = buildPeriodStats(sessions, focusMinutes, 7, "2026-08-19T12:00:00Z");
+    expect(stats.totalSessions).toBe(4);
+    expect(stats.activeDays).toBe(3);
+    expect(stats.completionRate).toBe(42.9);
+    expect(stats.averageFocusMinutes).toBe(26.3);
+    expect(stats.daily).toHaveLength(7);
+  });
+});
+
+describe("collectBadges", () => {
+  test("awards expected badges for streak, weekly and total milestones", () => {
+    const badges = collectBadges(3, 10, 100).map((badge) => badge.id);
+    expect(badges).toEqual(["streak-3", "weekly-10", "total-100"]);
+  });
+
+  test("returns empty list when no badge condition is met", () => {
+    expect(collectBadges(1, 2, 5)).toEqual([]);
   });
 });

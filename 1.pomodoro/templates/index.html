@@ -36,19 +36,73 @@
 
     <p class="session-count">Completed sessions: <span id="session-count">0</span></p>
 
+    <section class="gamification">
+      <h2 class="gamification__title">Gamification</h2>
+      <p class="gamification__meta">XP: <span id="xp-value">0</span> / Level: <span id="level-value">1</span></p>
+      <p class="gamification__meta">Streak: <span id="streak-value">0</span> days</p>
+      <div id="badge-list" class="badge-list" aria-label="achievement badges"></div>
+
+      <div class="stats">
+        <h3 class="stats__title">Weekly Stats (7 days)</h3>
+        <p class="stats__meta">Completion Rate: <span id="weekly-completion-rate">0%</span></p>
+        <p class="stats__meta">Avg Focus Time: <span id="weekly-avg-focus">0 min</span></p>
+        <div id="weekly-graph" class="stats__graph" aria-label="weekly sessions graph"></div>
+      </div>
+
+      <div class="stats">
+        <h3 class="stats__title">Monthly Stats (30 days)</h3>
+        <p class="stats__meta">Completion Rate: <span id="monthly-completion-rate">0%</span></p>
+        <p class="stats__meta">Avg Focus Time: <span id="monthly-avg-focus">0 min</span></p>
+        <div id="monthly-graph" class="stats__graph" aria-label="monthly sessions graph"></div>
+      </div>
+    </section>
+
     <section id="settings-panel" class="settings-panel" hidden>
       <h2 class="settings-panel__title">Settings</h2>
       <label class="settings-field">
         Work (minutes)
-        <input type="number" id="setting-work" min="1" max="120" value="25">
+        <select id="setting-work">
+          <option value="15">15</option>
+          <option value="25" selected>25</option>
+          <option value="35">35</option>
+          <option value="45">45</option>
+        </select>
       </label>
       <label class="settings-field">
         Short Break (minutes)
-        <input type="number" id="setting-short-break" min="1" max="60" value="5">
+        <select id="setting-short-break">
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+        </select>
       </label>
       <label class="settings-field">
         Long Break (minutes)
-        <input type="number" id="setting-long-break" min="1" max="60" value="15">
+        <select id="setting-long-break">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15" selected>15</option>
+        </select>
+      </label>
+      <label class="settings-field">
+        Theme
+        <select id="setting-theme">
+          <option value="dark" selected>Dark</option>
+          <option value="light">Light</option>
+          <option value="focus">Focus</option>
+        </select>
+      </label>
+      <label class="settings-field settings-field--checkbox">
+        Start sound
+        <input type="checkbox" id="setting-sound-start" checked>
+      </label>
+      <label class="settings-field settings-field--checkbox">
+        End sound
+        <input type="checkbox" id="setting-sound-end" checked>
+      </label>
+      <label class="settings-field settings-field--checkbox">
+        Tick sound
+        <input type="checkbox" id="setting-sound-tick">
       </label>
       <label class="settings-field">
         Sessions before Long Break
